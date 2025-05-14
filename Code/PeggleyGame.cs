@@ -13,7 +13,7 @@ namespace Peggley
         {
             // If this was a proper game, current scene would be set to a title screen lol
             // TODO: Implement Switch Scene method
-            _currentScene = new MainGameScene();
+            _currentScene = new MainMenuScene();
 
             Logger.Log("Game initialized.");
         }

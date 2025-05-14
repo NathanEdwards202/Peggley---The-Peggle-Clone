@@ -25,7 +25,7 @@ namespace Scenes.Objects.MainGame.Background
                 Texture = texture;
             }
 
-            public BackgroundImage Build()
+            public new BackgroundImage Build()
             {
                 return new BackgroundImage(this);
             }
