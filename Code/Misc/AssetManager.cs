@@ -16,6 +16,9 @@ namespace Misc
 
         public static Dictionary<string, SpriteFont> _fonts = new();
 
+        // Mapping of scenes to their loaded assets (textures and fonts)
+        private static Dictionary<string, HashSet<string>> _sceneAssets = new();
+
 
 #pragma warning disable CS8618 // VALUE SET AT THE START OF THE PROGRAM THROUGH SetContentManager(). THIS WILL NEVER BE NULL
         public static ContentManager _contentManager { get; private set; }
@@ -31,12 +34,14 @@ namespace Misc
 
 
         // Load a texture at a given path and add it to _textures, accessable via it's name (not path)
-        public static void LoadAsset<T>(string textureName)
+        public static void LoadAsset<T>(string textureName, string sceneName)
         {
             // Find string not including any '/'s
             string key = textureName;
             int finalSlash = textureName.LastIndexOf('/');
             if (finalSlash != -1) key = key[(finalSlash + 1)..];
+
+            if (_sceneAssets.ContainsKey(key)) return;
 
             try
             {
@@ -52,6 +57,14 @@ namespace Misc
                         throw new Exception("Unsupported type.");
                 }
 
+                // Add asset to scene's asset list
+                if (!_sceneAssets.ContainsKey(sceneName))
+                {
+                    _sceneAssets[sceneName] = new HashSet<string>();
+                }
+                _sceneAssets[sceneName].Add(key);
+
+
                 Logger.Log($"Texture {key} loaded");
             }
             catch
@@ -61,7 +74,7 @@ namespace Misc
         }
 
         // Stolen (and then further edited) from Stackoverflow, that's why this is different to LoadAsset<T>
-        public static void LoadAssetsFromFile<T>(string folderName)
+        public static void LoadAssetsFromFile<T>(string folderName, string sceneName)
         {
             //Load directory info, abort if none
             DirectoryInfo dir = new(_contentManager.RootDirectory + "\\" + folderName);
@@ -76,6 +89,8 @@ namespace Misc
             {
                 string key = Path.GetFileNameWithoutExtension(file.Name);
 
+                if (_sceneAssets.ContainsKey(key)) continue; 
+
                 switch (Type.GetTypeCode(typeof(T)))
                 {
                     case TypeCode.Object when typeof(T) == typeof(Texture2D):
@@ -88,9 +103,54 @@ namespace Misc
                         throw new Exception("Unsupported type.");
                 }
 
+                // Add asset to scene's asset list
+                if (!_sceneAssets.ContainsKey(sceneName))
+                {
+                    _sceneAssets[sceneName] = new HashSet<string>();
+                }
+                _sceneAssets[sceneName].Add(key);
+
                 Logger.Log($"Texture {key} loaded");
             }
         }
+
+        public static void UnloadAssetsForScene(string sceneName)
+        {
+            if (_sceneAssets.ContainsKey(sceneName))
+            {
+                foreach (string assetName in _sceneAssets[sceneName])
+                {
+                    // Check if the asset is used in any other scene
+                    bool isUsedInOtherScenes = false;
+
+                    // Check all scenes if any of them are still using this asset
+                    foreach (var scene in _sceneAssets.Keys)
+                    {
+                        if (scene != sceneName && _sceneAssets[scene].Contains(assetName))
+                        {
+                            isUsedInOtherScenes = true;
+                            break;
+                        }
+                    }
+
+                    // If the asset is not used in any other scene, unload it
+                    if (!isUsedInOtherScenes)
+                    {
+                        UnloadAsset(assetName);
+                    }
+                }
+
+                // Remove the scene from the mapping once its assets are unloaded
+                _sceneAssets.Remove(sceneName);
+                Logger.Log($"All assets unloaded for scene {sceneName}");
+            }
+            else
+            {
+                Logger.Log($"No assets found for scene {sceneName}");
+            }
+        }
+
+
 
         public static void UnloadAsset(string assetName)
         {
@@ -113,18 +173,6 @@ namespace Misc
         public static SpriteFont GetFont(string fontName)
         {
             return _fonts[fontName];
-        }
-
-
-        public static void OnLoadLevel(string mapName)
-        {
-            if (_currentMapTexture != null)
-            {
-                _textures.Remove(_currentMapTexture);
-            }
-
-            LoadAsset<Texture2D>("Overworld/BackgroundMaps/" + mapName);
-            _currentMapTexture = mapName;
         }
 
 

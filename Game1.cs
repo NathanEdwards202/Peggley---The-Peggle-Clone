@@ -35,9 +35,10 @@ namespace Peggley
             // Default Monitor Settings
             // TODO: Add monitor size switcherooing
             _graphics.HardwareModeSwitch = false;
-            _graphics.IsFullScreen = true;
-            _graphics.PreferredBackBufferWidth = 1920;
-            _graphics.PreferredBackBufferHeight = 1080;
+            _graphics.IsFullScreen = false;
+            WindowManager.SetDefaultDimensions();
+            _graphics.PreferredBackBufferWidth = WindowManager.WindowXDimension;
+            _graphics.PreferredBackBufferHeight = WindowManager.WindowYDimension;
             _graphics.ApplyChanges();
 
             // Initialize mouse inputs

@@ -17,6 +17,8 @@ namespace Scenes
             if (this.GetType() == typeof(Scene)) Logger.Log("Scene initialized.");
         }
 
+        public string _sceneName { get; protected set; }
+
         protected Queue<GameObject> _toAddNextFrame;
 
         int _frameCounterForGC = 0; // Tacky but used for forced garbage collection
@@ -32,7 +34,7 @@ namespace Scenes
 
         public virtual void OnSceneExit()
         {
-
+            AssetManager.UnloadAssetsForScene(_sceneName);
         }
         #endregion
 
