@@ -1,181 +1,84 @@
-﻿// This is stored as an example to replicate
-
-
-// THIS IS OUTDATED BUT GIVES A GENERAL IDEA OF HOW TO CREATE DEFAULT UI FOR A SCENE
-
-
-/*using Microsoft.Xna.Framework.Input;
+﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Misc;
-using Peggley.Code.Scenes.Objects.UI.MainGame.SideBar;
+using Peggley.Code.Scenes.Objects.UI.Interactable.Buttons.SceneSwap;
+using Scenes.Objects.Hitboxes;
+using Scenes.Objects.MainGame.Background;
 using Scenes.Objects.UI.Interactable.Buttons;
-using Scenes.Objects.UI.MainGame.Displays;
-using Scenes.Objects.UI.MainGame.SideBar;
+using System.Collections.Frozen;
 using System.Collections.Generic;
 
 namespace Scenes.Objects.UI.MainGame
 {
-    // I'm really not sure about having this as a static class
-    // This does not need to be in memory except at the start of a maingamescene
-    internal static class MainGameUICreator
+    internal class MainGameUICreator
     {
-        // Make that shiiiiiiiit
-        // Gets passed into Scene.AddToScene()
-        public static List<UIElement> GenerateSceneUIElements()
+        #region No Additional Setup Required
+        // Create those with no additional setup
+        public static List<GameObject> GenerateSceneUIElements(string sceneName)
         {
-            return new List<UIElement>
+            return new List<GameObject>()
             {
-                CreateInfoPanel(),
-                CreateWaveDisplay(),
-                CreateHealthDisplay(),
-                CreateNextRoundButton(),
-                CreateTowerButtons(0, TowerHolder._towers["Regular Tower"]),
-                CreateTowerButtons(1, TowerHolder._towers["Knight"]),
-                CreateTowerButtons(2, TowerHolder._towers["Wizard"]),
-                CreateTowerButtons(3, TowerHolder._towers["Pengu"])
+                GenerateBackgroundImage(sceneName),
             };
         }
 
 
-        // Info Panel Background
-        const int BG_WIDTH = 1420;
-        const int BG_HEIGHT = 1080;
-        const int BG_INFO_WIDTH = 500;
+        /// Each UI object will follow the same loading procedure
+        // Required constants defined before the function
+        // Attempt to load in required assets, this will skip if the asset is loaded so don't worry about copying
+        // Create the object
+        // Update parameters
+        // Return the created object
 
-        static UIElement CreateInfoPanel()
+
+        const int DEFAULT_BG_WIDTH = 1280;
+        const int DEFAULT_BG_HEIGHT = 720;
+        const string MAIN_MENU_BACKGROUND_PATH = "MainGame/Background/";
+        const string MAIN_MENU_BACKGROUND_TEXTURE_NAME = "TestBackgroundTwo";
+        static BackgroundImage GenerateBackgroundImage(string sceneName)
         {
-            UIElement infoPanel = new(AssetManager._textures["InfoBG"]
-                , position: new(BG_WIDTH, 0)
-                , layer: -1 // Get this behind everything
-                , rotation: 0
-                , size: new(BG_INFO_WIDTH, BG_HEIGHT));
-            return infoPanel;
+            AssetManager.LoadAsset<Texture2D>(MAIN_MENU_BACKGROUND_PATH + MAIN_MENU_BACKGROUND_TEXTURE_NAME, sceneName);
+
+            return new BackgroundImage.Builder(AssetManager._textures[MAIN_MENU_BACKGROUND_TEXTURE_NAME])
+                .SetPosition(new Vector2(0, 0))
+                .SetSize(new Vector2(DEFAULT_BG_WIDTH, DEFAULT_BG_HEIGHT))
+                .Build<BackgroundImage>();
         }
 
+        #endregion
 
-        // Wave Display
-        const int WAVE_POSITION_X = 1440;
-        const int WAVE_POSITION_Y = 20;
-        const int WAVE_SIZE_X = 440;
-        const int WAVE_SIZE_Y = 100;
 
-        static WaveTextDisplay CreateWaveDisplay()
+
+        #region Additional Setup Required
+
+        const int DEFAULT_SCENE_SWAP_BUTTON_WIDTH = 200;
+        const int DEFAULT_SCENE_SWAP_BUTTON_HEIGHT = 100;
+        const string SCENE_SWAP_BUTTON_BACKGROUND_PATH = "Non-Scene-Specific/UI/Buttons/";
+        const string SCENE_SWAP_BUTTON_BACKGROUND_TEXTURE_NAME = "TestButton";
+        public static SceneSwapButton GenerateSceneSwapButton(string sceneName)
         {
-            WaveTextDisplay newWaveDisplay = new(
-                font: AssetManager.GetFont("DefaultFontArial"),
-                defaultTextValue: "",
-                position: new(WAVE_POSITION_X, WAVE_POSITION_Y),
-                layer: 0,
-                rotation: 0,
-                size: new(WAVE_SIZE_X, WAVE_SIZE_Y)
-                );
+            AssetManager.LoadAsset<Texture2D>(SCENE_SWAP_BUTTON_BACKGROUND_PATH + SCENE_SWAP_BUTTON_BACKGROUND_TEXTURE_NAME, sceneName);
 
-            return newWaveDisplay;
-        }
-
-
-        // Health Display
-        const int HEALTH_DISPLAY_POSITION_X = 1440;
-        const int HEALTH_DISPLAY_POSITION_Y = 140;
-        const int HEALTH_DISPLAY_SIZE_X = 440;
-        const int HEALTH_DISPLAY_SIZE_Y = 100;
-
-        static HealthDisplay CreateHealthDisplay()
-        {
-            HealthDisplay newHealthDisplay = new(
-                font: AssetManager.GetFont("DefaultFontArial"),
-                defaultTextValue: "",
-                position: new(HEALTH_DISPLAY_POSITION_X, HEALTH_DISPLAY_POSITION_Y),
-                layer: 0,
-                rotation: 0,
-                size: new(HEALTH_DISPLAY_SIZE_X, HEALTH_DISPLAY_SIZE_Y)
-                );
-
-            return newHealthDisplay;
-        }
-
-
-        // Next Round Button
-        const int NEXT_ROUND_BUTTON_SIZE_X = 240;
-        const int NEXT_ROUND_BUTTON_SIZE_Y = 240;
-        const int NEXT_ROUND_BUTTON_POSITION_X = 1920 - NEXT_ROUND_BUTTON_SIZE_X - 20;
-        const int NEXT_ROUND_BUTTON_POSITION_Y = 1080 - NEXT_ROUND_BUTTON_SIZE_Y - 20;
-
-        static NextRoundButton CreateNextRoundButton()
-        {
-            ButtonStateRenderingHolder interactableStateRenderingHolder, hoveringStateRenderingHolder, heldStateRenderingHolder, pressedStateRenderingHolder, deactivatedStateRenderingHolder;
-
-            interactableStateRenderingHolder = new(
-                texture: AssetManager.GetTexture("PlayButtonInteractable")
-                );
-            hoveringStateRenderingHolder = new(
-                texture: AssetManager.GetTexture("PlayButtonHovering")
-                );
-            heldStateRenderingHolder = new(
-                texture: AssetManager.GetTexture("PlayButtonHeld")
-                );
-            pressedStateRenderingHolder = new(
-                texture: AssetManager.GetTexture("PlayButtonPressed")
-                );
-            deactivatedStateRenderingHolder = new(
-                texture: AssetManager.GetTexture("PlayButtonDisabled"),
-                alpha: 0.5f
-                );
-
-            NextRoundButton nextRoundButton = new(
-                interactableHolder: interactableStateRenderingHolder,
-                hoveringHolder: hoveringStateRenderingHolder,
-                heldHolder: heldStateRenderingHolder,
-                pressedHolder: pressedStateRenderingHolder,
-                deactivatedHolder: deactivatedStateRenderingHolder,
-                defaultState: ButtonState.Interactable,
-                position: new(
-                    NEXT_ROUND_BUTTON_POSITION_X,
-                    NEXT_ROUND_BUTTON_POSITION_Y
-                    ),
-                layer: 0,
-                rotation: 0,
-                size: new(
-                    NEXT_ROUND_BUTTON_SIZE_X,
-                    NEXT_ROUND_BUTTON_SIZE_Y
-                    )
-                );
-
-            return nextRoundButton;
-        }
-
-
-        // Tower Buttons
-        const int TOWER_BUTTON_SIZE = 128;
-        const int TOWER_BUTTON_POSITION_LEFT_X = 1920 - 500 + 50;
-        const int TOWER_BUTTON_POSITION_RIGHT_X = 1920 - 50 - TOWER_BUTTON_SIZE;
-        const int TOWER_BUTTON_POSITION_TOP_Y = 260;
-        const int TOWER_BUTTON_POSITION_BOTTOM_Y = TOWER_BUTTON_POSITION_TOP_Y + 50 + TOWER_BUTTON_SIZE;
-
-        static TowerButton CreateTowerButtons(int buttonNumber, TowerStatsTemplate template)
-        {
-            if (buttonNumber > 3) throw new System.Exception("Only 4 towers allowed at once");
-
-            bool left = buttonNumber % 2 == 0;
-            bool top = buttonNumber - 2 < 0;
-
-            TowerButton button = new(
-                towerTemplate: template,
+            SceneSwapButton btn = new Button.Builder(
                 interactableHolder: new(
-                    texture: AssetManager.GetTexture(template._textureName),
-                    1
-                    ),
-                position: new(
-                    left ? TOWER_BUTTON_POSITION_LEFT_X : TOWER_BUTTON_POSITION_RIGHT_X,
-                    top ? TOWER_BUTTON_POSITION_TOP_Y : TOWER_BUTTON_POSITION_BOTTOM_Y
-                    ),
-                size: new(
-                    TOWER_BUTTON_SIZE,
-                    TOWER_BUTTON_SIZE
-                    )
-                );
+                    texture: AssetManager._textures[SCENE_SWAP_BUTTON_BACKGROUND_TEXTURE_NAME],
+                    alpha: 1
+                ),
+                hitbox: new RectangleHitbox(
+                    collisionFlags: new Dictionary<CollisionFlag, bool>
+                    {
+                        { CollisionFlag.MOUSE, true },
+                    }.ToFrozenDictionary()
+                )
+                )
+                .SetPosition(new(0, 0))
+                .SetSize(new(DEFAULT_SCENE_SWAP_BUTTON_WIDTH, DEFAULT_SCENE_SWAP_BUTTON_HEIGHT))
+                .SetLayer(1)
+                .Build<SceneSwapButton>();
 
-            return button;
+            return btn;
         }
+
+        #endregion
     }
 }
-*/

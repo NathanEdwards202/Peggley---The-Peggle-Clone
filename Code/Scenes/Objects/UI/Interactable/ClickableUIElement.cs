@@ -11,7 +11,6 @@ namespace Scenes.Objects.UI.Interactable
     {
         protected ClickableUIElement(Builder builder) : base(builder)
         {
-            if (this.GetType() == typeof(ClickableUIElement)) Logger.Log("ClickableUIElement initialized.");
         }
 
         #region Builder

@@ -25,8 +25,6 @@ namespace Scenes.Objects
             _texture = builder.Texture;
 
             _forDeletion = false;
-
-            if (this.GetType() == typeof(GameObject)) Logger.Log("GameObject initialized.");
         }
 
         #region BUILDER

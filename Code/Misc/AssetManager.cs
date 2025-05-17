@@ -1,9 +1,12 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using Scenes;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
+using System.Linq;
 
 #nullable enable
 
@@ -41,31 +44,34 @@ namespace Misc
             int finalSlash = textureName.LastIndexOf('/');
             if (finalSlash != -1) key = key[(finalSlash + 1)..];
 
-            if (_sceneAssets.ContainsKey(key)) return;
-
             try
             {
-                switch (Type.GetTypeCode(typeof(T)))
-                {
-                    case TypeCode.Object when typeof(T) == typeof(Texture2D):
-                        _textures.Add(key, _contentManager.Load<Texture2D>(textureName));
-                        break;
-                    case TypeCode.Object when typeof(T) == typeof(SpriteFont):
-                        _fonts.Add(key, _contentManager.Load<SpriteFont>(textureName));
-                        break;
-                    default:
-                        throw new Exception("Unsupported type.");
-                }
-
-                // Add asset to scene's asset list
                 if (!_sceneAssets.ContainsKey(sceneName))
                 {
                     _sceneAssets[sceneName] = new HashSet<string>();
                 }
+
+                if (!_sceneAssets.Values.Any(set => set.Contains(key)))
+                {
+                    switch (Type.GetTypeCode(typeof(T)))
+                    {
+                        case TypeCode.Object when typeof(T) == typeof(Texture2D):
+                            _textures.TryAdd(key, _contentManager.Load<Texture2D>(textureName));
+                            Logger.Log($"Texture {key} loaded");
+                            break;
+                        case TypeCode.Object when typeof(T) == typeof(SpriteFont):
+                            _fonts.TryAdd(key, _contentManager.Load<SpriteFont>(textureName));
+                            Logger.Log($"Font {key} loaded");
+                            break;
+                        default:
+                            throw new Exception("Unsupported type.");
+                    }
+                }
+
                 _sceneAssets[sceneName].Add(key);
 
+                var tst = _sceneAssets;
 
-                Logger.Log($"Texture {key} loaded");
             }
             catch
             {
@@ -74,6 +80,7 @@ namespace Misc
         }
 
         // Stolen (and then further edited) from Stackoverflow, that's why this is different to LoadAsset<T>
+        /*
         public static void LoadAssetsFromFile<T>(string folderName, string sceneName)
         {
             //Load directory info, abort if none
@@ -89,58 +96,60 @@ namespace Misc
             {
                 string key = Path.GetFileNameWithoutExtension(file.Name);
 
-                if (_sceneAssets.ContainsKey(key)) continue; 
-
-                switch (Type.GetTypeCode(typeof(T)))
+                if (!_sceneAssets.ContainsKey(key))
                 {
-                    case TypeCode.Object when typeof(T) == typeof(Texture2D):
-                        _textures.Add(key, _contentManager.Load<Texture2D>(folderName + "/" + key));
-                        break;
-                    case TypeCode.Object when typeof(T) == typeof(SpriteFont):
-                        _fonts.Add(key, _contentManager.Load<SpriteFont>(folderName + "/" + key));
-                        break;
-                    default:
-                        throw new Exception("Unsupported type.");
-                }
+                    switch (Type.GetTypeCode(typeof(T)))
+                    {
+                        case TypeCode.Object when typeof(T) == typeof(Texture2D):
+                            _textures.Add(key, _contentManager.Load<Texture2D>(folderName + "/" + key));
+                            Logger.Log($"Texture {key} loaded");
+                            break;
+                        case TypeCode.Object when typeof(T) == typeof(SpriteFont):
+                            _fonts.Add(key, _contentManager.Load<SpriteFont>(folderName + "/" + key));
+                            Logger.Log($"Font {key} loaded");
+                            break;
+                        default:
+                            throw new Exception("Unsupported type.");
+                    }
 
-                // Add asset to scene's asset list
-                if (!_sceneAssets.ContainsKey(sceneName))
-                {
                     _sceneAssets[sceneName] = new HashSet<string>();
                 }
-                _sceneAssets[sceneName].Add(key);
 
-                Logger.Log($"Texture {key} loaded");
+                _sceneAssets[sceneName].Add(key);
             }
-        }
+        }*/
 
         public static void UnloadAssetsForScene(string sceneName)
         {
             if (_sceneAssets.ContainsKey(sceneName))
             {
-                foreach (string assetName in _sceneAssets[sceneName])
+                // Create a list of assets to unload
+                var assetsToUnload = new List<string>(_sceneAssets[sceneName]);
+
+                // Iterate through the assets of the scene to check if they're used in other scenes
+                foreach (string assetName in assetsToUnload)
                 {
-                    // Check if the asset is used in any other scene
                     bool isUsedInOtherScenes = false;
 
-                    // Check all scenes if any of them are still using this asset
+                    // Check if the asset is used in any other scene
                     foreach (var scene in _sceneAssets.Keys)
                     {
                         if (scene != sceneName && _sceneAssets[scene].Contains(assetName))
                         {
                             isUsedInOtherScenes = true;
-                            break;
+                            break; // If the asset is used in another scene, we can stop checking
                         }
                     }
 
                     // If the asset is not used in any other scene, unload it
                     if (!isUsedInOtherScenes)
                     {
+                        Logger.Log($"Unloading Asset: {assetName}");
                         UnloadAsset(assetName);
                     }
                 }
 
-                // Remove the scene from the mapping once its assets are unloaded
+                // Now remove the scene from the mapping once its assets are unloaded
                 _sceneAssets.Remove(sceneName);
                 Logger.Log($"All assets unloaded for scene {sceneName}");
             }
@@ -149,8 +158,6 @@ namespace Misc
                 Logger.Log($"No assets found for scene {sceneName}");
             }
         }
-
-
 
         public static void UnloadAsset(string assetName)
         {

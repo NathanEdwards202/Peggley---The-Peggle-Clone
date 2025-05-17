@@ -9,8 +9,6 @@ namespace Actors
         public Actor(Builder builder) : base(builder)
         {
             _name = builder.Name;
-
-            if (this.GetType() == typeof(Actor)) Logger.Log($"Actor {_name} initialize");
         }
 
         #region Builder

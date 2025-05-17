@@ -15,10 +15,14 @@ namespace Misc
 
         public static bool _dirtyLayer { get; private set; } = true;
 
-        public static EventHandler<OnGameObjectCreatedEventArgs> onGameObjectCreated;
-        public class OnGameObjectCreatedEventArgs : EventArgs
+        public static void OnSceneSwap()
         {
-            public GameObject obj;
+            foreach(GameObject obj in objects)
+            {
+                obj.OnRemovedFromScene();
+            }
+
+            objects.Clear();
         }
 
         public static void OnDirtyLayer()

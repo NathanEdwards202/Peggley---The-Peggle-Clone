@@ -12,7 +12,6 @@ namespace Scenes.Objects.MainGame.Background
         public BackgroundImage(Builder builder) : base(builder)
         {
             if (_texture == null) throw new ArgumentNullException(nameof(Texture), "Texture cannot be null for a BackgroundImage.");
-            if (this.GetType() == typeof(BackgroundImage)) Logger.Log("Background Image initialized.");
         }
 
         #region Builder
@@ -25,7 +24,7 @@ namespace Scenes.Objects.MainGame.Background
                 Texture = texture;
             }
 
-            public new BackgroundImage Build()
+            public BackgroundImage Build()
             {
                 return new BackgroundImage(this);
             }
