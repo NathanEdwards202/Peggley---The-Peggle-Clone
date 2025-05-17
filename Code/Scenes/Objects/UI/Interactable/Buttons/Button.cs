@@ -1,7 +1,6 @@
 ﻿using Controllers.Inputs;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Misc;
 using Scenes.Objects.Hitboxes;
 using System;
 
@@ -30,8 +29,6 @@ namespace Scenes.Objects.UI.Interactable.Buttons
             if (builder.ParentObject != null) _linkedTo = builder.ParentObject;
 
             ChangeState(builder.DefaultState);
-
-            if (this.GetType() == typeof(Button)) Logger.Log("Button initialized.");
         }
 
         #region Builder

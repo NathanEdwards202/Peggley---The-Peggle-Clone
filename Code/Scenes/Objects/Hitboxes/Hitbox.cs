@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Frozen;
+using System.Collections.Generic;
 
 namespace Scenes.Objects.Hitboxes
 {
@@ -16,14 +17,32 @@ namespace Scenes.Objects.Hitboxes
         ENVIRONMENT,
         ACTORS,
         UI
-        // Add others later
     }
 
     public abstract class Hitbox
     {
+        protected Hitbox(FrozenDictionary<CollisionFlag, bool> inputFlags)
+        {
+            _collisionFlags = NormalizeFlags(inputFlags);
+        }
+
         public HitboxType _type { get; protected set; }
         public CollisionFlag _collisionFlag { get; protected set; }
         public FrozenDictionary<CollisionFlag, bool> _collisionFlags { get; protected set; }
+
+        // Method to be called in constructors, ensuring that the dictionary contains all flags
+        protected FrozenDictionary<CollisionFlag, bool> NormalizeFlags(FrozenDictionary<CollisionFlag, bool> inputFlags)
+        {
+            var builder = new Dictionary<CollisionFlag, bool>();
+
+            foreach (CollisionFlag flag in Enum.GetValues(typeof(CollisionFlag)))
+            {
+                builder[flag] = inputFlags.TryGetValue(flag, out bool value) ? value : false;
+            }
+
+            return builder.ToFrozenDictionary();
+        }
+
 
         // Method to check if the current hitbox can collide with another one based on flags
         public bool CanCollideWith(Hitbox other)
@@ -34,7 +53,7 @@ namespace Scenes.Objects.Hitboxes
         // Static method to check collision between two GameObjects
         public static bool CheckCollision(GameObject thisGameObject, GameObject otherGameObject)
         {
-            // If either GameObject has no hitbox, no collision can occur
+            // If either GameObject has no hitbox, no collision
             if (thisGameObject._hitbox == null || otherGameObject._hitbox == null)
                 return false;
 
@@ -46,16 +65,14 @@ namespace Scenes.Objects.Hitboxes
             return thisGameObject._hitbox.PerformCollisionChecks(thisGameObject, otherGameObject);
         }
 
-        // Abstract method to be implemented by subclasses to check collision between two hitboxes
         public abstract bool PerformCollisionChecks(GameObject thisGameObject, GameObject otherGameObject);
     }
 
     public class RectangleHitbox : Hitbox
     {
-        public RectangleHitbox(FrozenDictionary<CollisionFlag, bool> collisionFlags)
+        public RectangleHitbox(FrozenDictionary<CollisionFlag, bool> collisionFlags) : base(collisionFlags)
         {
             _type = HitboxType.RECTANGLE;
-            _collisionFlags = collisionFlags;
         }
 
         // Rectangle-specific collision check
@@ -74,7 +91,6 @@ namespace Scenes.Objects.Hitboxes
             }
         }
 
-        // Method to check if two rectangles are colliding
         public bool CheckRectangleCollision(Vector2 thisPos, Vector2 thisSize, Vector2 otherPos, Vector2 otherSize)
         {
             return thisPos.X < otherPos.X + otherSize.X &&
@@ -83,7 +99,6 @@ namespace Scenes.Objects.Hitboxes
                    thisPos.Y + thisSize.Y > otherPos.Y;
         }
 
-        // Method to check if a rectangle and a circle are colliding
         public bool CheckRectangleCircleCollision(Vector2 thisPos, Vector2 thisSize, Vector2 otherPos, float otherRadius)
         {
             float closestX = Math.Clamp(otherPos.X, thisPos.X, thisPos.X + thisSize.X);
@@ -98,12 +113,12 @@ namespace Scenes.Objects.Hitboxes
 
     public class CircleHitbox : Hitbox
     {
-        public CircleHitbox(FrozenDictionary<CollisionFlag, bool> collisionFlags)
+        public CircleHitbox(FrozenDictionary<CollisionFlag, bool> collisionFlags) : base(collisionFlags)
         {
             _type = HitboxType.CIRCLE;
-            _collisionFlags = collisionFlags;
         }
 
+        // Circle-specific collision check
         public override bool PerformCollisionChecks(GameObject thisObject, GameObject otherObject)
         {
             switch (otherObject._hitbox._type)
@@ -119,7 +134,7 @@ namespace Scenes.Objects.Hitboxes
             }
         }
 
-        // Method to check if two rectangles are colliding
+        // Might not work, just copied and flipped variables from the rectangle collisions
         public bool CheckCirlceRectangleCollision(Vector2 thisPos, float thisRadius, Vector2 otherPos, Vector2 otherSize)
         {
             float closestX = Math.Clamp(otherPos.X, thisPos.X, thisPos.X + otherSize.X);
@@ -131,14 +146,14 @@ namespace Scenes.Objects.Hitboxes
             return (distanceX * distanceX + distanceY * distanceY) <= (thisRadius * thisRadius);
         }
 
-        // Method to check if a rectangle and a circle are colliding
         public bool CheckCircleCollision(Vector2 thisPos, Vector2 thisSize, Vector2 otherPosition, float otherRadius)
         {
             // Calculate the distance between the two circle centers
             float distance = Vector2.Distance(thisPos + thisSize / 2, otherPosition + thisSize);
 
             // Check if the distance is less than or equal to the sum of the radii
-            return distance <= (thisSize.X + otherRadius); // Assuming Size.X is the radius
+            // Assuming Size.X is the radius
+            return distance <= (thisSize.X + otherRadius); 
         }
     }
 }

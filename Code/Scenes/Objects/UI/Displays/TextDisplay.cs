@@ -13,8 +13,6 @@ namespace Scenes.Objects.UI.Displays
         {
             _font = builder.Font;
             _textValue = builder.DefaultText;
-
-            if (this.GetType() == typeof(TextDisplay)) Logger.Log("TextDisplay initialized.");
         }
 
         #region Builder

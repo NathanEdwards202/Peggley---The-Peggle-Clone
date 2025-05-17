@@ -1,18 +1,24 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Misc;
+using Peggley.Code.Scenes.Objects.UI.Interactable.Buttons.SceneSwap;
+using Scenes.Objects.Hitboxes;
 using Scenes.Objects.MainGame.Background;
+using Scenes.Objects.UI.Interactable.Buttons;
+using System.Collections.Frozen;
 using System.Collections.Generic;
 
 namespace Scenes.Objects.UI.MainMenu
 {
     internal class MainMenuUICreator
     {
+        #region No Additional Setup Required
+        // Create those with no additional setup
         public static List<GameObject> GenerateSceneUIElements(string sceneName)
         {
             return new List<GameObject>()
             {
-                GenerateBackgroundImage(sceneName)
+                GenerateBackgroundImage(sceneName),
             };
         }
 
@@ -38,5 +44,41 @@ namespace Scenes.Objects.UI.MainMenu
                 .SetSize(new Vector2(DEFAULT_BG_WIDTH, DEFAULT_BG_HEIGHT))
                 .Build<BackgroundImage>();
         }
+
+        #endregion
+
+
+
+        #region Additional Setup Required
+
+        const int DEFAULT_SCENE_SWAP_BUTTON_WIDTH = 200;
+        const int DEFAULT_SCENE_SWAP_BUTTON_HEIGHT = 100;
+        const string SCENE_SWAP_BUTTON_BACKGROUND_PATH = "Non-Scene-Specific/UI/Buttons/";
+        const string SCENE_SWAP_BUTTON_BACKGROUND_TEXTURE_NAME = "TestButton";
+        public static SceneSwapButton GenerateSceneSwapButton(string sceneName)
+        {
+            AssetManager.LoadAsset<Texture2D>(SCENE_SWAP_BUTTON_BACKGROUND_PATH + SCENE_SWAP_BUTTON_BACKGROUND_TEXTURE_NAME, sceneName);
+
+            SceneSwapButton btn = new Button.Builder(
+                interactableHolder: new(
+                    texture: AssetManager._textures[SCENE_SWAP_BUTTON_BACKGROUND_TEXTURE_NAME],
+                    alpha: 1
+                ),
+                hitbox: new RectangleHitbox(
+                    collisionFlags: new Dictionary<CollisionFlag, bool>
+                    {
+                        { CollisionFlag.MOUSE, true },
+                    }.ToFrozenDictionary()
+                )
+                )
+                .SetPosition(new(0, 0))
+                .SetSize(new(DEFAULT_SCENE_SWAP_BUTTON_WIDTH, DEFAULT_SCENE_SWAP_BUTTON_HEIGHT))
+                .SetLayer(1)
+                .Build<SceneSwapButton>();
+
+            return btn;
+        }
+
+        #endregion
     }
 }

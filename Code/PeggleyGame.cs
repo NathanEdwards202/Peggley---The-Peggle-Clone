@@ -1,8 +1,11 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Misc;
+using Peggley.Code.Scenes.Objects.UI.Interactable.Buttons.SceneSwap;
 using Scenes;
 using Scenes.SceneTypes;
+using System;
+using System.Collections.Generic;
 
 
 namespace Peggley
@@ -11,18 +14,36 @@ namespace Peggley
     {
         public PeggleyGame()
         {
-            // If this was a proper game, current scene would be set to a title screen lol
-            // TODO: Implement Switch Scene method
             _currentScene = new MainMenuScene();
-
-            Logger.Log("Game initialized.");
+            SetupDelegates();
+            OnSceneSwapButtonCreated(this, null); // This has to be called manually on first entering a scene, probably a better way to handle this
         }
 
-        Scene _currentScene; // Visual studio wants me to make this readonly... But like... If this was made properly, with multiple scene types it wouldn't be
+        void SetupDelegates()
+        {
+            SetupSceneSwapDelegates();
+        }
 
+        void RemoveDelegates()
+        {
+            RemoveSceneSwapDelegates();
+        }
+
+        Scene _currentScene;
+        Scene _nextScene;
         public void Update(GameTime gameTime)
         {
             _currentScene.Update(gameTime);
+
+            if (_currentScene._sceneEnding)
+            {
+                if (_nextScene == null)
+                {
+                    Logger.Log("Scene not set before changing scene", Logger.LogLevel.Error);
+                    return;
+                }
+                SwitchScene();
+            }
         }
 
         public void Render(ref SpriteBatch sb, GameWindow window)
@@ -30,12 +51,70 @@ namespace Peggley
             _currentScene.Render(ref sb, window);
         }
 
-
-        public void SwitchScene(Scene newScene)
+        void SwitchScene()
         {
+            RemoveSceneSwapDelegates();
             _currentScene?.OnSceneExit();
-            _currentScene = newScene;
+            _currentScene = _nextScene;
             _currentScene.OnSceneEnter();
+            SetupSceneSwapDelegates();
+            _nextScene = null;
+
+            OnSceneSwapButtonCreated(this, null); // This has to be called manually on first entering a scene, probably a better way to handle this
+        }
+
+        void GenerateNewScene(object sender, SceneSwapButtonEventArgs args)
+        {
+            // Map types to Scene Creation functions
+            Dictionary<Type, Func<Scene>> sceneCreators = new()
+            {
+                { typeof(MainMenuScene), () => new MainMenuScene() },
+                { typeof(MainGameScene), () => new MainGameScene() }
+            };
+
+            // Find scene creator, make scene
+            if (sceneCreators.TryGetValue(args.sceneType, out Func<Scene> createScene))
+            {
+                _nextScene = createScene();
+                _currentScene.EndScene();
+            }
+            else
+            {
+                throw new ArgumentException("Unsupported scene type.", nameof(args.sceneType));
+            }
+        }
+        
+        void OnSceneSwapButtonCreated(object obj, EventArgs args)
+        {
+            foreach (SceneSwapButton btn in _currentScene._sceneSwapButtons)
+            {
+                btn.buttonClicked -= GenerateNewScene;
+            }
+
+            foreach (SceneSwapButton btn in _currentScene._sceneSwapButtons)
+            {
+                btn.buttonClicked += GenerateNewScene;
+            }
+        }
+
+        void OnSceneSwapButtonRemoved(object obj, EventArgs args)
+        {
+            foreach (SceneSwapButton btn in _currentScene._sceneSwapButtons)
+            {
+                btn.buttonClicked -= GenerateNewScene;
+            }
+        }
+
+        void SetupSceneSwapDelegates()
+        {
+            _currentScene.onSceneSwapButtonAdded += OnSceneSwapButtonCreated;
+            _currentScene.onSceneSwapButtonRemoved += OnSceneSwapButtonRemoved;
+        }
+
+        void RemoveSceneSwapDelegates()
+        {
+            _currentScene.onSceneSwapButtonAdded -= OnSceneSwapButtonCreated;
+            _currentScene.onSceneSwapButtonRemoved -= OnSceneSwapButtonRemoved;
         }
     }
 }

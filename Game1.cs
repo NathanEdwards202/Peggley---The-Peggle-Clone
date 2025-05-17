@@ -68,12 +68,12 @@ namespace Peggley
             }
             catch (DirectoryNotFoundException e)
             {
-                Logger.Log(e.Message);
+                Logger.Log($"Couldn't find file: {e.Message}");
                 Exit();
             }
             catch (Exception e)
             {
-                Logger.Log(e.Message);
+                Logger.Log($"Error: {e.Message}");
                 Exit();
             }
 
